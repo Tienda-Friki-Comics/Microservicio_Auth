@@ -1,16 +1,20 @@
 package com.tiendafriki.autenticacion.service;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.beans.factory.annotation.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import com.tiendafriki.autenticacion.repo.UsuarioRepo;
 import com.tiendafriki.autenticacion.model.Usuario;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.stereotype.Service;
 import com.tiendafriki.autenticacion.dto.*;
+
 import java.util.*;
 
 @Service
 public class UsuarioService {
+
+    // =====================================================
+    // INYECCIÓN DE DEPENDENCIAS
+    // =====================================================
 
     @Autowired
     private UsuarioRepo ur;
@@ -18,115 +22,249 @@ public class UsuarioService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private RestTemplate restTemplate;
+    // =====================================================
+    // LISTAR
+    // =====================================================
 
-    @Value("${carrito.service.url}")
-    private String csurl;
+    public ListarDTO<Usuario> listar() {
 
-    public UsuarioService(UsuarioRepo ur, PasswordEncoder passwordEncoder, RestTemplate restTemplate) {
-        this.ur = ur;
-        this.passwordEncoder = passwordEncoder;
-        this.restTemplate = restTemplate;
+        List<Usuario> lu = ur.findAll();
+
+        return new ListarDTO<>(
+                lu.size(),
+                lu
+        );
     }
 
-    public ListarDTO <Usuario> listar() {
-        List <Usuario> lu = ur.findAll();
-        return new ListarDTO <> (lu.size(), lu);
+    // =====================================================
+    // BUSCAR POR ID
+    // =====================================================
+
+    public Usuario buscarxID(Integer id) {
+
+        return ur.findById(id)
+                .orElseThrow(() ->
+                        new NoSuchElementException(
+                                "[+] Usuario No Encontrado [>_<] ... "
+                        )
+                );
     }
 
-    public Optional <Usuario> buscarxID(Integer id) {
-        return ur.findByID(id);
+    // =====================================================
+    // BUSCAR POR CORREO
+    // =====================================================
+
+    public Usuario buscarxCorreo(String correo) {
+
+        return ur.findByCorreo(correo)
+                .orElseThrow(() ->
+                        new NoSuchElementException(
+                                "[+] Usuario No Encontrado [>_<] ... "
+                        )
+                );
     }
 
-    public Optional <Usuario> buscarxCorreo(String correo) {
-        return ur.findByCorreo(correo);
+    // =====================================================
+    // BUSCAR POR RUT
+    // =====================================================
+
+    public Usuario buscarxRutUsuario(String rutUsuario) {
+
+        return ur.findByRutUsuario(rutUsuario)
+                .orElseThrow(() ->
+                        new NoSuchElementException(
+                                "[+] Usuario No Encontrado [>_<] ... "
+                        )
+                );
     }
 
-    public Optional <Usuario> buscarxRutUsuario(String rutUsuario) {
-        return ur.findByRutUsuario(rutUsuario);
+    // =====================================================
+    // BUSCAR POR NOMBRE
+    // =====================================================
+
+    public ListarDTO<Usuario> buscarxNombre(String nombre) {
+
+        List<Usuario> lu =
+                ur.findByNombreIgnoreCase(nombre);
+
+        return new ListarDTO<>(
+                lu.size(),
+                lu
+        );
     }
 
-    public ListarDTO <Usuario> buscarxNombre(String nombre) {
-        List <Usuario> lu = ur.findByNombreIgnoreCase(nombre);
-        return new ListarDTO <> (lu.size(), lu);
-    }
+    // =====================================================
+    // BUSCAR POR ROL
+    // =====================================================
 
-    public Optional <Usuario> buscarxRol(String rol) {
+    public List<Usuario> buscarxRol(String rol) {
+
         return ur.findByRolIgnoreCase(rol);
     }
 
+    // =====================================================
+    // GUARDAR
+    // =====================================================
+
     public SimpleDTO Guardar(UsuarioDTO dto) {
+
+        // =====================================================
+        // VALIDAR CORREO
+        // =====================================================
+
         if (ur.existsByCorreo(dto.getCorreo())) {
-            return new SimpleDTO("[+] Ya Existe Un Usuario Con Ese Correo : " + dto.getCorreo() + " [>_<] ... ");
-        } if (ur.existsByRutUsuario(dto.getRutUsuario())) {
-            return new SimpleDTO("[+] Ya Existe Un Usuario Con Este Rut [>_<] ... ");
+
+            throw new IllegalArgumentException(
+                    "[+] Ya Existe Un Usuario Con Ese Correo [>_<] ... "
+            );
         }
+
+        // =====================================================
+        // VALIDAR RUT
+        // =====================================================
+
+        if (ur.existsByRutUsuario(dto.getRutUsuario())) {
+
+            throw new IllegalArgumentException(
+                    "[+] Ya Existe Un Usuario Con Este Rut [>_<] ... "
+            );
+        }
+
+        // =====================================================
+        // CREAR USUARIO
+        // =====================================================
+
         Usuario u = new Usuario();
+
         u.setRutUsuario(dto.getRutUsuario());
         u.setNombre(dto.getNombre());
         u.setApellido(dto.getApellido());
         u.setCorreo(dto.getCorreo());
-        u.setContraseña(passwordEncoder.encode(dto.getContraseña()));
+
+        // =====================================================
+        // ENCRIPTAR CONTRASEÑA
+        // =====================================================
+
+        u.setContraseña(
+                passwordEncoder.encode(dto.getContraseña())
+        );
+
         u.setRol(dto.getRol());
         u.setActivo(true);
+
         ur.save(u);
-        return new SimpleDTO("[+] Usuario Creado Exitosamente Para : " + dto.getNombre() + " [>_<] ... ");
+
+        return new SimpleDTO(
+                "[+] Usuario Creado Exitosamente [>_<] ... "
+        );
     }
+
+    // =====================================================
+    // ACTUALIZAR
+    // =====================================================
 
     public SimpleDTO Actualizar(Integer id, UsuarioDTO dto) {
-        Optional <Usuario> lu = ur.findByID(id);
-        if (lu.isPresent()) {
-            Usuario u = lu.get();
-            if (!u.getCorreo().equalsIgnoreCase(dto.getCorreo()) && ur.existsByCorreo(dto.getCorreo())) {
-                return new SimpleDTO("[+] Ya Existe Un Usuario Con Este Correo : " + dto.getCorreo() + " [>_<] ... ");
-            } if (!u.getRutUsuario().equalsIgnoreCase(dto.getRutUsuario()) && ur.existsByRutUsuario(dto.getRutUsuario())) {
-                return new SimpleDTO("[+] Ya Existe Un Usuario Con Este Rut [>_<] ... ");
-            }   
-            u.setRutUsuario(dto.getRutUsuario());
-            u.setNombre(dto.getNombre());
-            u.setApellido(dto.getApellido());
-            u.setCorreo(dto.getCorreo());
-            u.setContraseña(passwordEncoder.encode(dto.getContraseña()));
-            u.setRol(dto.getRol());
-            ur.save(u);
-            return new SimpleDTO("[+] Usuario Actualizado Correctamente [>_<] ... ");
+
+        Usuario u = ur.findById(id)
+                .orElseThrow(() ->
+                        new NoSuchElementException(
+                                "[+] Usuario No Encontrado [>_<] ... "
+                        )
+                );
+
+        // =====================================================
+        // VALIDAR CORREO DUPLICADO
+        // =====================================================
+
+        if (!u.getCorreo().equalsIgnoreCase(dto.getCorreo())
+                && ur.existsByCorreo(dto.getCorreo())) {
+
+            throw new IllegalArgumentException(
+                    "[+] Ya Existe Un Usuario Con Ese Correo [>_<] ... "
+            );
         }
-        return new SimpleDTO("[+] Usuario Con El ID : " + id + " No Fue Encontrado [>_<] ... ");
+
+        // =====================================================
+        // VALIDAR RUT DUPLICADO
+        // =====================================================
+
+        if (!u.getRutUsuario().equalsIgnoreCase(dto.getRutUsuario())
+                && ur.existsByRutUsuario(dto.getRutUsuario())) {
+
+            throw new IllegalArgumentException(
+                    "[+] Ya Existe Un Usuario Con Ese Rut [>_<] ... "
+            );
+        }
+
+        // =====================================================
+        // ACTUALIZAR DATOS
+        // =====================================================
+
+        u.setRutUsuario(dto.getRutUsuario());
+        u.setNombre(dto.getNombre());
+        u.setApellido(dto.getApellido());
+        u.setCorreo(dto.getCorreo());
+
+        // =====================================================
+        // ENCRIPTAR NUEVA CONTRASEÑA
+        // =====================================================
+
+        u.setContraseña(
+                passwordEncoder.encode(dto.getContraseña())
+        );
+
+        u.setRol(dto.getRol());
+
+        ur.save(u);
+
+        return new SimpleDTO(
+                "[+] Usuario Actualizado Correctamente [>_<] ... "
+        );
     }
+
+    // =====================================================
+    // ELIMINAR
+    // =====================================================
 
     public SimpleDTO Eliminar(Integer id) {
-        Optional <Usuario> lu = ur.findByID(id);
-        if (lu.isPresent()) {
-            ur.deleteById(id);
-            return new SimpleDTO("[+] Usuario Eliminado Correctamente [>_<] ... ");
-        }
-        return new SimpleDTO("[+] Usuario Del ID : " + id + " No Fue Encontrado [>_<] ... ");
+
+        Usuario u = ur.findById(id)
+                .orElseThrow(() ->
+                        new NoSuchElementException(
+                                "[+] Usuario No Encontrado [>_<] ... "
+                        )
+                );
+
+        ur.delete(u);
+
+        return new SimpleDTO(
+                "[+] Usuario Eliminado Correctamente [>_<] ... "
+        );
     }
+
+    // =====================================================
+    // CAMBIAR ESTADO
+    // =====================================================
 
     public SimpleDTO CambiarEstado(Integer id, Boolean activo) {
-        Optional <Usuario> lu = ur.findByID(id);
-        if (lu.isPresent()) {
-            Usuario u = lu.get();
-            u.setActivo(activo);
-            ur.save(u);
-            String Estado = activo ? "Activado" : "Desactivado";
-            return new SimpleDTO("[+] Usuario " + Estado + " Correcatamente [>_<] ... ");
-        }
-        return new SimpleDTO("[+] Usuario Del ID : " + id + " No Fue Encontrado [>_<] ... ");
-    }
 
-    public Object obtenerCarrito(Integer usuarioID) {
-        Optional <Usuario> lu = ur.findByID(usuarioID);
-        if (lu.isEmpty()) {
-            return new SimpleDTO("[+] Usuario Del ID : " + usuarioID + " No Fue Encontrado [>_<] ... ");
-        }
-        String url = csurl + "carrito/buscarxrutusuario" + lu.get().getRutUsuario();
-        try {
-            return restTemplate.getForObject(url, Object.class);
-        } catch (Exception e) {
-            return new SimpleDTO("[+] No Se Pudo Conectar Con El Microservicio Del Carrito [<_<] ... ");
-        }
+        Usuario u = ur.findById(id)
+                .orElseThrow(() ->
+                        new NoSuchElementException(
+                                "[+] Usuario No Encontrado [>_<] ... "
+                        )
+                );
+
+        u.setActivo(activo);
+
+        ur.save(u);
+
+        String estado =
+                activo ? "Activado" : "Desactivado";
+
+        return new SimpleDTO(
+                "[+] Usuario " + estado + " Correctamente [>_<] ... "
+        );
     }
 
 }
