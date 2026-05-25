@@ -24,6 +24,12 @@ public class UsuarioService {
     @Value("${carrito.service.url}")
     private String csurl;
 
+    public UsuarioService(UsuarioRepo ur, PasswordEncoder passwordEncoder, RestTemplate restTemplate) {
+        this.ur = ur;
+        this.passwordEncoder = passwordEncoder;
+        this.restTemplate = restTemplate;
+    }
+
     public ListarDTO <Usuario> listar() {
         List <Usuario> lu = ur.findAll();
         return new ListarDTO <> (lu.size(), lu);
@@ -31,6 +37,10 @@ public class UsuarioService {
 
     public Optional <Usuario> buscarxID(Integer id) {
         return ur.findByID(id);
+    }
+
+    public Optional <Usuario> buscarxCorreo(String correo) {
+        return ur.findByCorreo(correo);
     }
 
     public Optional <Usuario> buscarxRutUsuario(String rutUsuario) {
