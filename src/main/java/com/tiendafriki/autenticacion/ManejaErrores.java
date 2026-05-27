@@ -101,6 +101,8 @@ public class ManejaErrores {
                 .body(error);
     }
 
+    
+
         // === ERROR 500: ERROR INTERNO DEL SERVIDOR === //
 
         // Esta excepción se utiliza para errores inesperados
@@ -149,6 +151,7 @@ public class ManejaErrores {
 
         return ResponseEntity.status(500).body(errorDTO);
         }
+
 
 
     // =====================================================

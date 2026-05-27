@@ -45,6 +45,16 @@ public class UsuarioController {
         );
     }
 
+    @GetMapping("/buscarxrol/{rol}")
+    public ResponseEntity<?> buscarxRol(
+            @PathVariable String rol
+    ) {
+
+        return ResponseEntity.ok(
+                us.buscarxNombre(rol)
+        );
+    }
+
     @GetMapping("/buscarxrutusuario/{rutUsuario}")
     public ResponseEntity<?> buscarxRut(
             @PathVariable String rutUsuario
