@@ -1,6 +1,5 @@
 package com.tiendafriki.autenticacion.model;
 
-import jakarta.validation.constraints.*;
 import jakarta.persistence.*;
 import lombok.*;
 

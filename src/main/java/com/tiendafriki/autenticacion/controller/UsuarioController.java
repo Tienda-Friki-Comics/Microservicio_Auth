@@ -17,10 +17,6 @@ public class UsuarioController {
     @Autowired
     private UsuarioService us;
 
-    // =====================================================
-    // LISTAR
-    // =====================================================
-
     @GetMapping("/listar")
     public ResponseEntity<?> Listar() {
 
@@ -28,10 +24,6 @@ public class UsuarioController {
                 us.listar()
         );
     }
-
-    // =====================================================
-    // BUSCAR POR ID
-    // =====================================================
 
     @GetMapping("/buscarxid/{id}")
     public ResponseEntity<?> buscarxID(
@@ -43,10 +35,6 @@ public class UsuarioController {
         );
     }
 
-    // =====================================================
-    // BUSCAR POR NOMBRE
-    // =====================================================
-
     @GetMapping("/buscarxnombre/{nombre}")
     public ResponseEntity<?> buscarxNombre(
             @PathVariable String nombre
@@ -56,10 +44,6 @@ public class UsuarioController {
                 us.buscarxNombre(nombre)
         );
     }
-
-    // =====================================================
-    // BUSCAR POR RUT
-    // =====================================================
 
     @GetMapping("/buscarxrutusuario/{rutUsuario}")
     public ResponseEntity<?> buscarxRut(
@@ -71,10 +55,6 @@ public class UsuarioController {
         );
     }
 
-    // =====================================================
-    // CREAR
-    // =====================================================
-
     @PostMapping("/crear")
     public ResponseEntity<?> Crear(
             @Valid @RequestBody UsuarioDTO dto
@@ -84,10 +64,6 @@ public class UsuarioController {
                 us.Guardar(dto)
         );
     }
-
-    // =====================================================
-    // ACTUALIZAR
-    // =====================================================
 
     @PutMapping("/actualizar/{id}")
     public ResponseEntity<?> Actualizar(
@@ -99,10 +75,6 @@ public class UsuarioController {
                 us.Actualizar(id, dto)
         );
     }
-
-    // =====================================================
-    // ELIMINAR
-    // =====================================================
 
     @DeleteMapping("/eliminar/{id}")
     public ResponseEntity<?> Eliminar(
